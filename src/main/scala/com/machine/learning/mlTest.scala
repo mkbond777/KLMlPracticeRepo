@@ -48,6 +48,7 @@ object mlTest {
       (1.0, Vectors.dense(0.0, 2.2, -1.5))
     )).toDF("label", "features")
 
+
     // Make predictions on test data using the Transformer.transform() method.
     // LogisticRegression.transform will only use the 'features' column.
     // Note that model2.transform() outputs a 'myProbability' column instead of the usual
