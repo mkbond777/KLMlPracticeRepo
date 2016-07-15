@@ -25,7 +25,7 @@
         <scala.version>2.10.5</scala.version>
         <scala.compat.version>2.10</scala.compat.version>
         <spark.scala.version>2.10</spark.scala.version>
-        <spark.version>1.6.1</spark.version>
+        <spark.version>1.6.2</spark.version>
         <avro.version>1.7.4</avro.version>
         <java.version>1.7</java.version>
         <parquet.version>1.7.0</parquet.version>
@@ -36,6 +36,16 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.10</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.10</artifactId>
+            <version>${spark.version}</version>
         </dependency>
     </dependencies>
 
