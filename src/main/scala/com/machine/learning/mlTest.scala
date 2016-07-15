@@ -25,6 +25,7 @@ object mlTest {
 
     println("Model 1 was fit using parameters: " + model1.parent.extractParamMap)
 
+    println("hello Machine Learning")
 
 
       }
