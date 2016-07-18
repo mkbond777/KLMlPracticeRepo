@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/amazonMl.iml" filepath="$PROJECT_DIR$/amazonMl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SampleRecommendationEngine.iml" filepath="$PROJECT_DIR$/SampleRecommendationEngine.iml" />
     </modules>
   </component>
 </project>
