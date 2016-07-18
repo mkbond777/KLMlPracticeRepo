@@ -1,10 +1,10 @@
 package com.machine.test
 
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer}
+import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.Row
+import org.apache.spark.{SparkConf, SparkContext}
 
 
 object PipelineExample {
