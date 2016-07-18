@@ -4,7 +4,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.sql.Row
+import org.apache.spark.sql._
 
 
 object mlTest {
@@ -48,20 +48,18 @@ object mlTest {
       (1.0, Vectors.dense(0.0, 2.2, -1.5))
     )).toDF("label", "features")
 
-
     // Make predictions on test data using the Transformer.transform() method.
     // LogisticRegression.transform will only use the 'features' column.
     // Note that model2.transform() outputs a 'myProbability' column instead of the usual
     // 'probability' column since we renamed the lr.probabilityCol parameter previously.
-    val transformed = model2.transform(test)
-
-    transformed.select("features", "label", "myProbability", "prediction")
+    model2.transform(test)
+      .select("features", "label", "myProbability", "prediction")
       .collect()
-      .foreach { case Row(features: Vector[Any], label: Double, myProbability: Vector[Any], prediction: Double) =>
+      .foreach { case Row(features, label, myProbability, prediction) =>
         println(s"($features, $label) -> prob=$myProbability, prediction=$prediction")
       }
 
-    println(transformed)
+    //println(transformed)
 
 
   }
