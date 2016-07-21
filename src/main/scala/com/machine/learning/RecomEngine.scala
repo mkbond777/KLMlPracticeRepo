@@ -1,7 +1,8 @@
 package com.machine.learning
 
+
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.ml.recommendation.ALS
+import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.ml.recommendation.ALS.Rating
 
 
@@ -96,17 +97,55 @@ object RecomEngine {
 
     val splits = ratingsDF.randomSplit(Array(0.8, 0.2), 0L)
 
-    val trainingRatingsRDD = splits(0).cache()
-    val testRatingsRDD = splits(1).cache()
+    val trainingRatingsDF = splits(0)
+    val testRatingsDF = splits(1)
 
-    val numTraining = trainingRatingsRDD.count()
-    val numTest = testRatingsRDD.count()
-    println(s"Training: $numTraining, test: $numTest.")
+//    val numTraining = trainingRatingsDF.count()
+//    val numTest = testRatingsDF.count()
+//    println(s"Training: $numTraining, test: $numTest.")
 
     // build a ALS user product matrix model with rank=20, iterations=10
-    val model = new ALS().setRank(20).setMaxIter(10).fit(trainingRatingsRDD)
+    val model : ALSModel = new ALS().setRank(5).setMaxIter(2).fit(trainingRatingsDF)
 
-    model.
+    val topRecsForUsers = model
+      .transform(trainingRatingsDF)
+
+    topRecsForUsers.join(moviesDF, topRecsForUsers("item")===moviesDF("movieId"))
+      .select("user","title","prediction").where("user = 4169")
+      .sort($"prediction".desc)
+
+    val testUserItemDf = testRatingsDF.select("user","item")
+
+    //testRatingsDF.where("user=5234 and item=31").show()
+
+    val predictionsForTestDF  = model.setPredictionCol("prating").transform(testUserItemDf)
+
+    //predictionsForTestDF.show()
+
+    val testAndPredictionsJoinedDF = testRatingsDF.join(predictionsForTestDF,Seq("user","item"))
+
+    //testAndPredictionsJoinedDF.show(5)
+
+    val falsePositives = testAndPredictionsJoinedDF.where("rating<=1 and prating >= 4")
+
+    val countFalsePositives=falsePositives.count()
+
+    println(countFalsePositives)
+
+    // Evaluate the model using Mean Absolute Error (MAE) between test
+    // and predictions
+    val meanAbsoluteError = testAndPredictionsJoinedDF.withColumn("err",($"rating"-$"prating"))
+      .selectExpr("abs(err) as absErr")
+      .groupBy("absErr")
+      .avg("absErr")
+
+    println(meanAbsoluteError)
+//    val predictionsKeyedByUserProductDF = predictionsForTestDF.map{
+//      case Rating(user, item, rating) => ((user, item), rating)
+//    }
+//
+//    predictionsKeyedByUserProductDF.foreach(println)
+//    //model.transform(trainingRatingsDF).where("user = 4169").show(4)
 
 
 
