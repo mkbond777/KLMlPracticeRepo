@@ -8,21 +8,24 @@ import org.apache.spark.ml.recommendation.ALS.Rating
 
 //import org.apache.spark.sql.DataFrame
 
-
+//input format MovieID::Title::Genres
 case class Movie(movieId: Int, title: String, genres: Seq[String])
 
+//input format is UserID::Gender::Age::Occupation::Zip-code
 case class User(userId: Int, gender: String, age: Int,
                 occupation: Int, zip: String)
 
 
 object RecomEngine {
 
+  // function to parse input into Movie class
   private def parseMovie(str: String): Movie = {
     val fields = str.split("::")
     assert(fields.size == 3)
     Movie(fields(0).toInt, fields(1), Seq(fields(2)))
   }
 
+  // function to parse input into User class
   private def parseUser(str: String): User = {
     val fields = str.split("::")
     assert(fields.size == 5)
@@ -42,10 +45,15 @@ object RecomEngine {
 
     import sqlContext.implicits._
 
+    // load the data into a RDD and then convert it to DF
     val ratingsRDD = sc.textFile(ratingsFilePath).map(_.split("::")).
       map(r => Rating(r(0).toInt, r(1).trim.toInt, r(2).trim.toFloat))
 
     val ratingsDF = ratingsRDD.toDF()
+
+    val usersDF = sc.textFile(usersFilePath).map(parseUser).toDF()
+
+    val moviesDF = sc.textFile(moviesFilePath).map(parseMovie).toDF()
 
     //println("Total number of ratings: " + ratingsDF.count())
 
@@ -53,20 +61,19 @@ object RecomEngine {
 
     //println("Total number of users who rated movies: " + ratingsDF.select("user").distinct().count())
 
-    val usersDF = sc.textFile(usersFilePath).map(parseUser).toDF()
-
-    val moviesDF = sc.textFile(moviesFilePath).map(parseMovie).toDF()
-
     usersDF.printSchema()
 
     moviesDF.printSchema()
 
     ratingsDF.printSchema()
 
+    //Registering dataframes as temp table.
     ratingsDF.registerTempTable("ratings")
     moviesDF.registerTempTable("movies")
     usersDF.registerTempTable("users")
 
+    // Get the max, min ratings along with the count of users who have
+    // rated a movie.
     val results = sqlContext.sql(
       """select movies.title, movierates.maxr, movierates.minr, movierates.cntu
     from(SELECT ratings.item, max(ratings.rating) as maxr,
@@ -77,11 +84,9 @@ object RecomEngine {
 
     //results.show()
 
-    //results.coalesce(10).write.format("json").mode("overwrite").save("file:\\C:\\Manish\\amazonMl\\abc")
-
     // Show the top 10 most-active users and how many times they rated
     // a movie
-    val mostActiveUsersSchemaRDD = sqlContext.sql(
+    val mostActiveUsersSchemaDF = sqlContext.sql(
       """SELECT ratings.user, count(*) as ct from ratings
   group by ratings.user order by ct desc limit 10""")
 
@@ -95,37 +100,46 @@ object RecomEngine {
 
     //resultsFor4169.show
 
+    // Randomly split ratings DF into training
+    // data DF (80%) and test DF RDD (20%)
     val splits = ratingsDF.randomSplit(Array(0.8, 0.2), 0L)
 
     val trainingRatingsDF = splits(0)
     val testRatingsDF = splits(1)
 
-//    val numTraining = trainingRatingsDF.count()
-//    val numTest = testRatingsDF.count()
-//    println(s"Training: $numTraining, test: $numTest.")
+    //val numTraining = trainingRatingsDF.count()
+    //val numTest = testRatingsDF.count()
+    println("Training Data count: " + trainingRatingsDF.count() + "and test data Count: " + testRatingsDF.count())
 
-    // build a ALS user product matrix model with rank=20, iterations=10
+    // build a ALS user product matrix model with rank=5, iterations=2
     val model : ALSModel = new ALS().setRank(5).setMaxIter(2).fit(trainingRatingsDF)
 
+
+    // Get the top 4 movie predictions for user 4169
     val topRecsForUsers = model
       .transform(trainingRatingsDF)
 
-    topRecsForUsers.join(moviesDF, topRecsForUsers("item")===moviesDF("movieId"))
+    val movieRecomfor4169 = topRecsForUsers.join(moviesDF, topRecsForUsers("item") === moviesDF("movieId"))
       .select("user","title","prediction").where("user = 4169")
       .sort($"prediction".desc)
 
+    println("Movie Recommendation for 4169 :" + movieRecomfor4169.show)
+
+    //prepare test rating for comparison
     val testUserItemDf = testRatingsDF.select("user","item")
 
-    //testRatingsDF.where("user=5234 and item=31").show()
-
+    // get predicted ratings to compare to test ratings
     val predictionsForTestDF  = model.setPredictionCol("prating").transform(testUserItemDf)
 
     //predictionsForTestDF.show()
 
+    //Join the test with predictions
     val testAndPredictionsJoinedDF = testRatingsDF.join(predictionsForTestDF,Seq("user","item"))
 
     //testAndPredictionsJoinedDF.show(5)
 
+
+    //finds false positives by finding predicted ratings which were >= 4 when the actual test rating was <= 1
     val falsePositives = testAndPredictionsJoinedDF.where("rating<=1 and prating >= 4")
 
     val countFalsePositives=falsePositives.count()
@@ -134,22 +148,12 @@ object RecomEngine {
 
     // Evaluate the model using Mean Absolute Error (MAE) between test
     // and predictions
-    val meanAbsoluteError = testAndPredictionsJoinedDF.withColumn("err",($"rating"-$"prating"))
+    val meanAbsoluteError = testAndPredictionsJoinedDF.withColumn("err", $"rating" - $"prating")
       .selectExpr("abs(err) as absErr")
       .groupBy("absErr")
       .avg("absErr")
 
-    println(meanAbsoluteError)
-//    val predictionsKeyedByUserProductDF = predictionsForTestDF.map{
-//      case Rating(user, item, rating) => ((user, item), rating)
-//    }
-//
-//    predictionsKeyedByUserProductDF.foreach(println)
-//    //model.transform(trainingRatingsDF).where("user = 4169").show(4)
-
-
-
-
+    println("meanAbsoluteError = " + meanAbsoluteError.show)
 
   }
 }
