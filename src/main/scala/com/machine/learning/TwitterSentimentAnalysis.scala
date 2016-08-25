@@ -11,5 +11,5 @@ import org.apache.spark.streaming.twitter._
   */
 object TwitterSentimentAnalysis {
   
-
+ print
 }
