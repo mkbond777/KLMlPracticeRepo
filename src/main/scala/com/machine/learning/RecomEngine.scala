@@ -1,9 +1,9 @@
 package com.machine.learning
 
 
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.ml.recommendation.ALS.Rating
+import org.apache.spark.ml.recommendation.{ALS, ALSModel}
+import org.apache.spark.sql.SparkSession
 
 
 //import org.apache.spark.sql.DataFrame
@@ -39,21 +39,32 @@ object RecomEngine {
     val usersFilePath = args(1)
     val moviesFilePath = args(2)
 
-    val conf = new SparkConf().setAppName("Sample Recommendation Engine")
-    val sc = new SparkContext(conf)
-    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+//    val spark = SparkSession
+//      .builder
+//      .appName("Spark SQL")
+//      .config("spark.scheduler.mode", "FAIR")
+//      .getOrCreate()
 
-    import sqlContext.implicits._
+//    val conf = new SparkConf().setAppName("Sample Recommendation Engine")
+//    val = new SparkContext(conf)
+    val spark = SparkSession
+      .builder
+      .appName("Recommendation Engine")
+      .config("spark.scheduler.mode", "FAIR").config("spark.sql.warehouse.dir", "file:///c:/tmp/spark-warehouse")
+      .getOrCreate()
+
+    import spark.implicits._
 
     // load the data into a RDD and then convert it to DF
-    val ratingsRDD = sc.textFile(ratingsFilePath).map(_.split("::")).
+    println(ratingsFilePath)
+    val ratingsRDD = spark.sparkContext.textFile(ratingsFilePath).map(_.split("::")).
       map(r => Rating(r(0).toInt, r(1).trim.toInt, r(2).trim.toFloat))
 
     val ratingsDF = ratingsRDD.toDF()
 
-    val usersDF = sc.textFile(usersFilePath).map(parseUser).toDF()
+    val usersDF = spark.sparkContext.textFile(usersFilePath).map(parseUser).toDF()
 
-    val moviesDF = sc.textFile(moviesFilePath).map(parseMovie).toDF()
+    val moviesDF = spark.sparkContext.textFile(moviesFilePath).map(parseMovie).toDF()
 
     //println("Total number of ratings: " + ratingsDF.count())
 
@@ -68,13 +79,13 @@ object RecomEngine {
     ratingsDF.printSchema()
 
     //Registering dataframes as temp table.
-    ratingsDF.registerTempTable("ratings")
-    moviesDF.registerTempTable("movies")
-    usersDF.registerTempTable("users")
+    ratingsDF.createOrReplaceTempView("ratings")
+    moviesDF.createTempView("movies")
+    usersDF.createTempView("users")
 
     // Get the max, min ratings along with the count of users who have
     // rated a movie.
-    val results = sqlContext.sql(
+    val results = spark.sql(
       """select movies.title, movierates.maxr, movierates.minr, movierates.cntu
     from(SELECT ratings.item, max(ratings.rating) as maxr,
     min(ratings.rating) as minr,count(distinct user) as cntu
@@ -86,14 +97,14 @@ object RecomEngine {
 
     // Show the top 10 most-active users and how many times they rated
     // a movie
-    val mostActiveUsersSchemaDF = sqlContext.sql(
+    val mostActiveUsersSchemaDF = spark.sql(
       """SELECT ratings.user, count(*) as ct from ratings
   group by ratings.user order by ct desc limit 10""")
 
     //println(mostActiveUsersSchemaRDD.collect().mkString("\n"))
 
     // Find the movies that user 4169 rated higher than 4
-    val resultsFor4169 = sqlContext.sql("""SELECT ratings.user, ratings.item as MovieID,
+    val resultsFor4169 = spark.sql("""SELECT ratings.user, ratings.item as MovieID,
   ratings.rating, movies.title FROM ratings JOIN movies
   ON movies.movieId=ratings.item
   where ratings.user=4169 and ratings.rating > 4""")

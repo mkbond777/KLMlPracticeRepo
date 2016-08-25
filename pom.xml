@@ -22,10 +22,12 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.version>2.10.5</scala.version>
-        <scala.compat.version>2.10</scala.compat.version>
-        <spark.scala.version>2.10</spark.scala.version>
-        <spark.version>1.6.2</spark.version>
+        <scala.version>2.11.1</scala.version>
+        <!--<scala.version.new>2.11</scala.version.new>-->
+        <scala.compat.version>2.11</scala.compat.version>
+        <spark.scala.version>2.11</spark.scala.version>
+        <spark.version>2.0.0</spark.version>
+        <!--<spark.version.new>2.0</spark.version.new>-->
         <avro.version>1.7.4</avro.version>
         <java.version>1.7</java.version>
         <parquet.version>1.7.0</parquet.version>
@@ -39,12 +41,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.10</artifactId>
+            <artifactId>spark-core_2.11</artifactId>
             <version>${spark.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.10</artifactId>
+            <artifactId>spark-mllib_2.11</artifactId>
             <version>${spark.version}</version>
         </dependency>
         <dependency>
@@ -61,7 +63,7 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming-twitter_${spark.scala.version}</artifactId>
-            <version>${spark.version}</version>
+            <version>1.6.2</version>
         </dependency>
     </dependencies>
 
