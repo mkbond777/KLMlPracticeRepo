@@ -153,7 +153,9 @@ object RecomEngine {
       .groupBy("absErr")
       .avg("absErr")
 
-    println("meanAbsoluteError = " + meanAbsoluteError.show)
+    println("meanAbsoluteError = ")
+
+    meanAbsoluteError.show
 
   }
 }
