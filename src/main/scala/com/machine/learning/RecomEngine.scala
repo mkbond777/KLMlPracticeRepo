@@ -56,7 +56,6 @@ object RecomEngine {
     import spark.implicits._
 
     // load the data into a RDD and then convert it to DF
-    println(ratingsFilePath)
     val ratingsRDD = spark.sparkContext.textFile(ratingsFilePath).map(_.split("::")).
       map(r => Rating(r(0).toInt, r(1).trim.toInt, r(2).trim.toFloat))
 

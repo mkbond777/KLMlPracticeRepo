@@ -49,11 +49,11 @@
             <artifactId>spark-mllib_2.11</artifactId>
             <version>${spark.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.databricks</groupId>
-            <artifactId>spark-csv_${spark.scala.version}</artifactId>
-            <version>1.3.0</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.databricks</groupId>-->
+            <!--<artifactId>spark-csv_2.10</artifactId>-->
+            <!--<version>1.4.0</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming_${spark.scala.version}</artifactId>
@@ -142,7 +142,7 @@
                         <configuration>
                             <artifactSet>
                                 <includes>
-                                    <include>com.databricks:*</include>
+                                    <!--<include>com.databricks:*</include>-->
                                     <include>org.apache.commons:commons-csv:*</include>
                                     <include>net.liftweb:*</include>
                                     <include>com.github.scopt:*</include>
