@@ -32,7 +32,8 @@ object TwitterSentimentAnalysisTraining {
     val allData = spark.
       read.
       option("header", "true").
-      option("inferSchema", "true").csv(args(0)) // Automatically infer data types
+      option("inferSchema", "true") // Automatically infer data types
+      .csv(args(0))
 //    allData.show(20)
     val splits = allData.randomSplit(Array(0.8, 0.2), seed = 11L)
     val trainingData = splits(0)
@@ -50,13 +51,21 @@ object TwitterSentimentAnalysisTraining {
 
     featurizeTrainingdData.printSchema()
 
+
+
     println("\n\n********* Training **********\n\n")
     val model = time{ new NaiveBayes().setFeaturesCol("rawFeatures").setLabelCol("Sentiment").fit(featurizeTrainingdData)}
 
-//    val predictions = model.transform(testData)
-//
-//    testData.show()
 
+    println("\n\n********* Testing **********\n\n")
+    val wordsTestData = tokenizer.transform(testData)
+    val featurizeTestdData = hashingTF.transform(wordsTestData)
+
+
+
+    val prediction = model.transform(featurizeTestdData)
+
+    prediction.show()
   }
 
   def time[R](block: => R): R = {
