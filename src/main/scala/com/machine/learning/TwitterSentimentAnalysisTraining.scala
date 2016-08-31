@@ -1,13 +1,8 @@
 package com.machine.learning
-import org.apache.spark.SparkConf
-import org.apache.spark.ml.feature._
-import org.apache.spark.sql.functions._
-import org.apache.spark.ml.classification.{LogisticRegression, NaiveBayes}
-import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.NaiveBayes
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
+import org.apache.spark.ml.feature._
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.twitter._
-import org.apache.spark.sql.execution.datasources.csv
 
 
 /**
@@ -46,7 +41,7 @@ object TwitterSentimentAnalysisTraining {
     val wordsData = tokenizer.transform(trainingData)
 
     val hashingTF = new HashingTF()
-      .setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(20)
+      .setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(10000)
 
     val featurizeTrainingdData = hashingTF.transform(wordsData)
 
@@ -55,7 +50,7 @@ object TwitterSentimentAnalysisTraining {
 
 
     println("\n\n********* Training **********\n\n")
-    val model = time{ new NaiveBayes().setFeaturesCol("rawFeatures").setLabelCol("Sentiment").fit(featurizeTrainingdData)}
+    val model = new NaiveBayes().setFeaturesCol("rawFeatures").setLabelCol("Sentiment").fit(featurizeTrainingdData)
 
 
     println("\n\n********* Testing **********\n\n")
@@ -79,11 +74,4 @@ object TwitterSentimentAnalysisTraining {
     println("Accuracy: " + accuracy)
   }
 
-  def time[R](block: => R): R = {
-    val t0 = System.nanoTime()
-    val result = block    // call-by-name
-    val t1 = System.nanoTime()
-    println("\n\nElapsed time: " + (t1 - t0)/1000 + "ms")
-    result
-  }
 }
