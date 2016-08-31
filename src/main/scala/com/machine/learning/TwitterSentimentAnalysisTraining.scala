@@ -4,6 +4,7 @@ import org.apache.spark.ml.feature._
 import org.apache.spark.sql.functions._
 import org.apache.spark.ml.classification.{LogisticRegression, NaiveBayes}
 import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.twitter._
 import org.apache.spark.sql.execution.datasources.csv
@@ -49,7 +50,7 @@ object TwitterSentimentAnalysisTraining {
 
     val featurizeTrainingdData = hashingTF.transform(wordsData)
 
-    featurizeTrainingdData.printSchema()
+    //featurizeTrainingdData.printSchema()
 
 
 
@@ -65,7 +66,17 @@ object TwitterSentimentAnalysisTraining {
 
     val prediction = model.transform(featurizeTestdData)
 
-    prediction.show()
+    //prediction.show()
+
+    // Select (prediction, true label) and compute test error
+    val evaluator = new MulticlassClassificationEvaluator()
+      .setLabelCol("Sentiment")
+      .setPredictionCol("prediction")
+      .setMetricName("accuracy")
+
+    val accuracy = evaluator.evaluate(prediction)
+
+    println("Accuracy: " + accuracy)
   }
 
   def time[R](block: => R): R = {
