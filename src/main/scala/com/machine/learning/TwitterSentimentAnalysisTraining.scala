@@ -20,7 +20,7 @@ object TwitterSentimentAnalysisTraining {
     val spark = SparkSession
       .builder
       .appName("Twitter Sentiment Analyzer")
-      .config("spark.scheduler.mode", "FAIR").config("spark.sql.warehouse.dir", "file:///c:/tmp/spark-warehouse")
+      .config("spark.sql.warehouse.dir", "file:///c:/tmp/spark-warehouse")
       .getOrCreate()
 
     //val stopWords = spark.broadcast(loadStopWords("/stopwords.txt")).value
